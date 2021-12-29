@@ -19,7 +19,7 @@ async function getRandomZhihuIds(count) {
   return ids;
 }
 
-async function markZhihuIdSucceed(id) {
+async function markArticleIdSucceed(id) {
   await redis.sadd(ZHIHU_ARTICLE_GOT_ID_SET, id);
 }
 
@@ -30,6 +30,6 @@ async function idBackInPool(id) {
 module.exports = {
   generateZhihuToRedis,
   getRandomZhihuIds,
-  markZhihuIdSucceed,
+  markArticleIdSucceed,
   idBackInPool,
 };

@@ -28,4 +28,16 @@ switch (process.argv[2]) {
         process.exit(1);
       });
     break;
+
+  case "get_single_article":
+    Spider.getSingleArticle(process.argv[3])
+      .then((r) => {
+        console.log("done");
+        process.exit(0);
+      })
+      .catch((e) => {
+        console.log(e);
+        process.exit(1);
+      });
+    break;
 }

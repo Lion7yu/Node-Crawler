@@ -6,7 +6,9 @@ async function spideringArticles(count) {
   const ids = await RedisServer.getRandomZhihuIds(count);
   console.log(ids);
   for (let id of ids) {
-    await getSingleArticle(id);
+    await getSingleArticle(id).catch((e) => {
+      if (e.errorCode !== 4040000) throw e;
+    });
     await new Promise((res) => {
       setTimeout(res, 1000);
     });
@@ -14,16 +16,23 @@ async function spideringArticles(count) {
 }
 
 async function getSingleArticle(id) {
-  const res = await axios.get(`https://www.zhihu.com/question/27909412}`);
+  const res = await axios
+    .get(`https://zhuanlan.zhihu.com/p/${id}`)
+    .catch((e) => {
+      if (e.response && e.response.status && e.response.status == 404) {
+        const err = new Error("Not Found");
+        err.errorCode = 4040000;
+        throw err;
+      } else {
+        throw e;
+      }
+    });
   const html = res.data;
   const $ = cherrio.load(html);
   const articleContent = $("div");
   if (!articleContent) {
-    // if 404, do nothing
-    // if deleted from zhihu, do nothing
-    // if is a video, put id back to pool
   } else {
-    // add to already-got set
+    await RedisServer.markArticleIdSucceed(id);
   }
   const dom = $(articleContent);
   const content = getTextOrImg(dom, []);
@@ -60,4 +69,5 @@ async function getSingleArticle(id) {
 
 module.exports = {
   spideringArticles,
+  getSingleArticle,
 };
