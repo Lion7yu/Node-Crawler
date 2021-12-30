@@ -21,11 +21,11 @@ async function spideringArticles(count) {
     await new Promise((res) => {
       setTimeout(res, 1000);
     });
-    return {
-      succeedCount,
-      errCount,
-    };
   }
+  return {
+    succeedCount,
+    errCount,
+  };
 }
 
 async function getSingleArticle(id) {
@@ -70,27 +70,27 @@ async function getSingleArticle(id) {
     return arr;
   }
 
-  MongoClient.connect(
-    "mongodb://localhost:27017/zhihu",
-    function (err, client) {
-      const db = client.db("zhihu");
-      db.collection("articles").findOneAndUpdate(
-        {
-          zhihuId: id,
-        },
-        {
-          content: content,
-          articleContentHtml: articleContent,
-          createAt: Date.now().valueOf(),
-        },
-        {
-          upsert: true,
-          returnNewValue: true,
-        }
-      );
-    }
-  );
-  console.log(content, "111");
+  // MongoClient.connect(
+  //   "mongodb://localhost:27017/zhihu",
+  //   function (err, client) {
+  //     const db = client.db("zhihu");
+  //     db.collection("articles").findOneAndUpdate(
+  //       {
+  //         zhihuId: id,
+  //       },
+  //       {
+  //         content: content,
+  //         articleContentHtml: articleContent,
+  //         createAt: Date.now().valueOf(),
+  //       },
+  //       {
+  //         upsert: true,
+  //         returnNewValue: true,
+  //       }
+  //     );
+  //   }
+  // );
+  console.log(content);
 }
 
 module.exports = {

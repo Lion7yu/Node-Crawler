@@ -4,13 +4,14 @@ const redis = new Redis();
 const ZHIHU_ID_SET_REDIS_KEY = "zhihu_id_set";
 const ZHIHU_ARTICLE_GOT_ID_SET = "zhihu_article_got_id_set";
 
-async function generateZhihuToRedis(min, max) {
+async function generateZhihuIdsToRedis(min, max) {
+  const ITERATION = 10000;
   for (let i = min; i < max; i++) {
-    const arr = new Array(10000);
-    for (let j = 0; j < 10000; j++) {
-      arr.push(i * 10000 + j);
+    const arr = new Array(ITERATION);
+    for (let j = 0; j < ITERATION; j++) {
+      arr.push(i * ITERATION + j);
     }
-    await redis.sadd(ZHIHU_ID_SET_REDIS_KEY, ...arr);
+    await redis.sadd(ZHIHU_ID_SET_REDIS_KEY, arr);
   }
 }
 
@@ -28,13 +29,12 @@ async function idBackInPool(id) {
 }
 
 async function getRemainingIDCount() {
-  return await redis.scard(ZHIHU_ID_SET_REDIS_KEY).then((r) => {
-    Number(r);
-  });
+  const idCount = await redis.scard(ZHIHU_ID_SET_REDIS_KEY);
+  return idCount;
 }
 
 module.exports = {
-  generateZhihuToRedis,
+  generateZhihuIdsToRedis,
   getRandomZhihuIds,
   markArticleIdSucceed,
   idBackInPool,
