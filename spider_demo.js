@@ -3,6 +3,7 @@ const cherrio = require("cheerio");
 const RedisServer = require("./redis_service");
 
 const MongoClient = require("mongodb").MongoClient;
+let db;
 
 async function spideringArticles(count) {
   const ids = await RedisServer.getRandomZhihuIds(count);
@@ -29,6 +30,9 @@ async function spideringArticles(count) {
 }
 
 async function getSingleArticle(id) {
+  // if (!db) {
+  //   db = await MongoClient.connect("mongodb://localhost:27017/zhihu");
+  // }
   const res = await axios
     .get(`https://zhuanlan.zhihu.com/p/${id}`)
     .catch((e) => {
@@ -70,24 +74,18 @@ async function getSingleArticle(id) {
     return arr;
   }
 
-  // MongoClient.connect(
-  //   "mongodb://localhost:27017/zhihu",
-  //   function (err, client) {
-  //     const db = client.db("zhihu");
-  //     db.collection("articles").findOneAndUpdate(
-  //       {
-  //         zhihuId: id,
-  //       },
-  //       {
-  //         content: content,
-  //         articleContentHtml: articleContent,
-  //         createAt: Date.now().valueOf(),
-  //       },
-  //       {
-  //         upsert: true,
-  //         returnNewValue: true,
-  //       }
-  //     );
+  // db.collection("articles").findOneAndUpdate(
+  //   {
+  //     zhihuId: id,
+  //   },
+  //   {
+  //     content: content,
+  //     articleContentHtml: articleContent,
+  //     createAt: Date.now().valueOf(),
+  //   },
+  //   {
+  //     upsert: true,
+  //     returnNewValue: true,
   //   }
   // );
   console.log(content);

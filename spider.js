@@ -1,7 +1,7 @@
 const RedisService = require("./redis_service");
 const Spider = require("./spider_demo");
 
-switch (process.argv[2]) {
+switch (process.argv[2] || process.env.NODE_ARGV_2) {
   case "generate_ids":
     RedisService.generateZhihuIdsToRedis(
       Number(process.argv[3]),
@@ -45,10 +45,8 @@ switch (process.argv[2]) {
 
 async function getArticlesBG() {
   const remainingCount = await RedisService.getRemainingIDCount();
-  console.log(remainingCount);
   const numbersPerTime = 5;
   while (remainingCount >= 5) {
-    console.log("4");
     await Spider.spideringArticles(numbersPerTime)
       .then((r) => {
         console.log(r);
