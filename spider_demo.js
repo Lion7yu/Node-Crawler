@@ -2,23 +2,33 @@ const axios = require("axios");
 const cherrio = require("cheerio");
 const RedisServer = require("./redis_service");
 
-const { MongoClient } = require("mongodb");
+const MongoClient = require("mongodb").MongoClient;
 
 async function spideringArticles(count) {
   const ids = await RedisServer.getRandomZhihuIds(count);
   console.log(ids);
+  let errCount = 0;
+  let succeedCount = 0;
   for (let id of ids) {
-    await getSingleArticle(id).catch((e) => {
-      if (e.errorCode !== 4040000) throw e;
-    });
+    await getSingleArticle(id)
+      .then((r) => {
+        succeedCount++;
+      })
+      .catch((e) => {
+        errCount++;
+        if (e.errorCode !== 4040000) throw e;
+      });
     await new Promise((res) => {
       setTimeout(res, 1000);
     });
+    return {
+      succeedCount,
+      errCount,
+    };
   }
 }
 
 async function getSingleArticle(id) {
-  const db = await MongoClient.connect("mongodb://localhost:27017/zhihu");
   const res = await axios
     .get(`https://zhuanlan.zhihu.com/p/${id}`)
     .catch((e) => {
@@ -40,15 +50,6 @@ async function getSingleArticle(id) {
   }
   const dom = $(articleContent);
   const content = getTextOrImg(dom, []);
-  // doms.map((i, d) => {
-  //   const text = $(d).text();
-  //   if (text) {
-  //     content.push(text);
-  //   } else if (d.name === "img") {
-  //     const src = $(d).attr("src");
-  //     content.push(src);
-  //   }
-  // });
 
   function getTextOrImg(dom, arr) {
     const d = $(dom);
@@ -68,22 +69,28 @@ async function getSingleArticle(id) {
     }
     return arr;
   }
-  console.log(content);
-  console.log(articleContent.html());
-  await db.collection("articles").findOneAndUpdate(
-    {
-      zhihuId: id,
-    },
-    {
-      content: content,
-      articleContentHtml: articleContent,
-      createAt: Date.now().valueOf(),
-    },
-    {
-      upsert: true,
-      returnNewValue: true,
+
+  MongoClient.connect(
+    "mongodb://localhost:27017/zhihu",
+    function (err, client) {
+      const db = client.db("zhihu");
+      db.collection("articles").findOneAndUpdate(
+        {
+          zhihuId: id,
+        },
+        {
+          content: content,
+          articleContentHtml: articleContent,
+          createAt: Date.now().valueOf(),
+        },
+        {
+          upsert: true,
+          returnNewValue: true,
+        }
+      );
     }
   );
+  console.log(content, "111");
 }
 
 module.exports = {

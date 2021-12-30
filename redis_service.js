@@ -27,9 +27,16 @@ async function idBackInPool(id) {
   await redis.sadd(ZHIHU_ID_SET_REDIS_KEY, id);
 }
 
+async function getRemainingIDCount() {
+  return await redis.scard(ZHIHU_ID_SET_REDIS_KEY).then((r) => {
+    Number(r);
+  });
+}
+
 module.exports = {
   generateZhihuToRedis,
   getRandomZhihuIds,
   markArticleIdSucceed,
   idBackInPool,
+  getRemainingIDCount,
 };

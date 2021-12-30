@@ -41,3 +41,17 @@ switch (process.argv[2]) {
       });
     break;
 }
+
+async function getArticlesBG() {
+  const remainingCount = await RedisService.getRemainingIDCount();
+  const numbersPerTime = 5;
+  while (remainingCount >= 5) {
+    await Spider.spideringArticles(numbersPerTime)
+      .then((r) => {
+        console.log(r);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  }
+}
