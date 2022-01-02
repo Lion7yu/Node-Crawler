@@ -1,9 +1,18 @@
 const axios = require("axios");
 const cherrio = require("cheerio");
 const RedisServer = require("./redis_service");
+const moment = require("moment");
 
 const MongoClient = require("mongodb").MongoClient;
 let db;
+
+class Tag {
+  constructor(name, score, value) {
+    this.name = name;
+    this.score = score;
+    this.value = value;
+  }
+}
 
 async function spideringArticles(count) {
   const ids = await RedisServer.getRandomZhihuIds(count);
@@ -47,6 +56,11 @@ async function getSingleArticle(id) {
   const html = res.data;
   const $ = cherrio.load(html);
   const articleContent = $("div");
+  const title = $(".Post-Header").children(".Post-Title").text();
+  const originalCreateAt = moment(
+    $(".ContentItem-time").text().split(" ")[1],
+    "YYYY年MM月dd日 hh:mm:ss"
+  );
   if (!articleContent) {
     return;
   } else {
@@ -74,23 +88,35 @@ async function getSingleArticle(id) {
     return arr;
   }
 
-  const zhihuDB = await db.db("zhihu");
-  await zhihuDB.collection("articles").findOneAndUpdate(
-    {
-      zhihuId: id,
-    },
-    {
-      $set: { zhihuId: id },
-      $set: { content: content },
-      $set: { articleContentHtml: articleContent.html() },
-      $push: { createAt: Date.now().valueOf() },
-    },
-    {
-      upsert: true,
-      returnNewDocument: true,
-    }
-  );
-  console.log(content);
+  const article = {
+    zhihuId: id,
+    content: content,
+    articleContentHtml: articleContent.html(),
+    createAt: Date.now().valueOf(),
+    originCreatedAt: originalCreateAt,
+    title: title, //单个内容的名字
+    tags: [],
+  };
+
+  console.log(article);
+
+  // const zhihuDB = await db.db("zhihu");
+  // await zhihuDB.collection("articles").findOneAndUpdate(
+  //   {
+  //     zhihuId: id,
+  //   },
+  //   {
+  //     $set: { zhihuId: id },
+  //     $set: { content: content },
+  //     $set: { articleContentHtml: articleContent.html() },
+  //     $push: { createAt: Date.now().valueOf() },
+  //   },
+  //   {
+  //     upsert: true,
+  //     returnNewDocument: true,
+  //   }
+  // );
+  // console.log(content);
 }
 
 module.exports = {
