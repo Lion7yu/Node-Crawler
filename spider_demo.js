@@ -30,9 +30,9 @@ async function spideringArticles(count) {
 }
 
 async function getSingleArticle(id) {
-  // if (!db) {
-  //   db = await MongoClient.connect("mongodb://localhost:27017/zhihu");
-  // }
+  if (!db) {
+    db = await MongoClient.connect("mongodb://localhost:27017/zhihu");
+  }
   const res = await axios
     .get(`https://zhuanlan.zhihu.com/p/${id}`)
     .catch((e) => {
@@ -74,20 +74,22 @@ async function getSingleArticle(id) {
     return arr;
   }
 
-  // db.collection("articles").findOneAndUpdate(
-  //   {
-  //     zhihuId: id,
-  //   },
-  //   {
-  //     content: content,
-  //     articleContentHtml: articleContent,
-  //     createAt: Date.now().valueOf(),
-  //   },
-  //   {
-  //     upsert: true,
-  //     returnNewValue: true,
-  //   }
-  // );
+  const zhihuDB = await db.db("zhihu");
+  await zhihuDB.collection("articles").findOneAndUpdate(
+    {
+      zhihuId: id,
+    },
+    {
+      $set: { zhihuId: id },
+      $set: { content: content },
+      $set: { articleContentHtml: articleContent.html() },
+      $push: { createAt: Date.now().valueOf() },
+    },
+    {
+      upsert: true,
+      returnNewDocument: true,
+    }
+  );
   console.log(content);
 }
 
